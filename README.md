@@ -1,4 +1,11 @@
-# RoboPLC RPC
+<h2>
+  RoboPLC RPC - JSON RPC 2.0 minimalistic server and client
+  <a href="https://crates.io/crates/atomic-timer"><img alt="crates.io page" src="https://img.shields.io/crates/v/atomic-timer.svg"></img></a>
+  <a href="https://docs.rs/atomic-timer"><img alt="docs.rs page" src="https://docs.rs/atomic-timer/badge.svg"></img></a>
+  <a href="https://github.com/roboplc/atomic-timer/actions/workflows/ci.yml">
+    <img alt="GitHub Actions CI" src="https://github.com/roboplc/atomic-timer/actions/workflows/ci.yml/badge.svg"></img>
+  </a>
+</h2>
 
 JSON RPC 2.0 server and client, part of [RoboPLC](https://www.roboplc.com)
 project.
