@@ -159,7 +159,7 @@ impl core::fmt::Display for RpcError {
 }
 
 #[cfg(feature = "std")]
-impl core::error::Error for RpcError {}
+impl std::error::Error for RpcError {}
 
 pub type RpcResult<R> = Result<R, RpcError>;
 
