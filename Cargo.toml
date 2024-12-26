@@ -9,6 +9,11 @@ description = "Fast and platform-independent JSON-RPC 2.0"
 readme = "README.md"
 keywords = ["rpc", "json-rpc", "nostd"]
 
+[package.metadata.docs.rs]
+features = ["full"]
+
+[package.metadata.playground]
+features = ["full"]
 
 [dependencies]
 heapless = { version = "0.8", features = ["serde"] }
