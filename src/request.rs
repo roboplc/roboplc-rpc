@@ -78,7 +78,7 @@ impl InvalidRequest<'_> {
             };
             Some(Response::from_rpc_response(
                 id,
-                RpcResponse::Error(RpcError {
+                RpcResponse::Err(RpcError {
                     kind: code,
                     message,
                 }),

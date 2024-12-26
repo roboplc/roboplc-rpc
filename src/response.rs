@@ -37,7 +37,7 @@ impl<R> Response<R> {
         Response {
             jsonrpc: VERSION_HEADER,
             id: self.id,
-            rpc_response: RpcResponse::Error(rpc_error),
+            rpc_response: RpcResponse::Err(rpc_error),
         }
     }
     pub fn id(&self) -> &Id {
@@ -50,7 +50,7 @@ impl<R> Response<R> {
         Response {
             jsonrpc: VERSION_HEADER,
             id,
-            rpc_response: RpcResponse::Error(RpcError {
+            rpc_response: RpcResponse::Err(RpcError {
                 kind: RpcErrorKind::InternalError,
                 message: Some(error),
             }),
@@ -62,22 +62,43 @@ impl<R> Response<R> {
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(deny_unknown_fields)]
 pub enum RpcResponse<R> {
-    #[cfg_attr(feature = "canonical", serde(rename = "error", alias = "e"))]
-    #[cfg_attr(not(feature = "canonical"), serde(rename = "e"))]
-    Error(RpcError),
     #[cfg_attr(feature = "canonical", serde(rename = "result", alias = "r"))]
     #[cfg_attr(not(feature = "canonical"), serde(rename = "r"))]
-    Result(R),
+    Ok(R),
+    #[cfg_attr(feature = "canonical", serde(rename = "error", alias = "e"))]
+    #[cfg_attr(not(feature = "canonical"), serde(rename = "e"))]
+    Err(RpcError),
+}
+
+impl<R> RpcResponse<R> {
+    pub fn is_ok(&self) -> bool {
+        matches!(self, RpcResponse::Ok(_))
+    }
+    pub fn is_err(&self) -> bool {
+        matches!(self, RpcResponse::Err(_))
+    }
+    pub fn ok(&self) -> Option<&R> {
+        match self {
+            RpcResponse::Ok(r) => Some(r),
+            RpcResponse::Err(_) => None,
+        }
+    }
+    pub fn err(&self) -> Option<&RpcError> {
+        match self {
+            RpcResponse::Ok(_) => None,
+            RpcResponse::Err(e) => Some(e),
+        }
+    }
 }
 
 impl<R> From<RpcResponse<R>> for RpcResult<R> {
     fn from(res: RpcResponse<R>) -> Self {
         match res {
-            RpcResponse::Error(e) => Err(RpcError {
+            RpcResponse::Err(e) => Err(RpcError {
                 kind: e.kind,
                 message: e.message,
             }),
-            RpcResponse::Result(r) => Ok(r),
+            RpcResponse::Ok(r) => Ok(r),
         }
     }
 }
@@ -85,8 +106,8 @@ impl<R> From<RpcResponse<R>> for RpcResult<R> {
 impl<R> From<RpcResult<R>> for RpcResponse<R> {
     fn from(res: RpcResult<R>) -> Self {
         match res {
-            Ok(r) => RpcResponse::Result(r),
-            Err(e) => RpcResponse::Error(e),
+            Ok(r) => RpcResponse::Ok(r),
+            Err(e) => RpcResponse::Err(e),
         }
     }
 }

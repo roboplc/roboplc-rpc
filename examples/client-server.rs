@@ -40,12 +40,7 @@ impl<'a> server::RpcServer<'a> for MyRpc {
     type Result = MyResult;
     type Source = &'static str;
 
-    fn rpc_handler(
-        &self,
-        method: MyMethod,
-        _source: Self::Source,
-        _response_required: bool,
-    ) -> RpcResult<MyResult> {
+    fn rpc_handler(&self, method: MyMethod, _source: Self::Source) -> RpcResult<MyResult> {
         match method {
             MyMethod::Test {} => Ok(MyResult::General { ok: true }),
             MyMethod::Hello { name } => Ok(MyResult::String(format!("Hello, {}", name))),

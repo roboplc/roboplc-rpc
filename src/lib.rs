@@ -43,7 +43,7 @@ where
     Ok(version.map(|_| ()))
 }
 
-#[allow(clippy::trivially_copy_pass_by_ref, clippy::ref_option)]
+#[allow(clippy::trivially_copy_pass_by_ref)]
 fn serialize_version<S>(_: &Option<()>, serializer: S) -> Result<S::Ok, S::Error>
 where
     S: serde::Serializer,
@@ -162,88 +162,3 @@ impl core::fmt::Display for RpcError {
 impl std::error::Error for RpcError {}
 
 pub type RpcResult<R> = Result<R, RpcError>;
-
-// ************************************* my
-
-//#[derive(Serialize, Deserialize, Debug)]
-//#[serde(tag = "method", content = "params", deny_unknown_fields)]
-//enum MyMethod {
-//#[serde(rename = "test")]
-//Test {},
-//#[serde(rename = "hello")]
-//Hello { name: String },
-//#[serde(rename = "list")]
-//List { i: String },
-//#[serde(rename = "complicated")]
-//Complicated {},
-//}
-
-//#[derive(Debug, Serialize, Deserialize)]
-//#[serde(untagged)]
-//enum MyHandlerResult {
-//General { ok: bool },
-//String(String),
-//}
-
-//struct MyRpc {}
-
-//impl server::RpcServer<'_> for MyRpc {
-//type Method = MyMethod;
-//type Result = MyHandlerResult;
-//type Source = &'static str;
-
-//fn rpc_handler(
-//&self,
-//method: MyMethod,
-//_source: Self::Source,
-//_response_required: bool,
-//) -> RpcResult<MyHandlerResult> {
-//match method {
-//MyMethod::Test {} => Ok(MyHandlerResult::General { ok: true }),
-//MyMethod::Hello { name } => Ok(MyHandlerResult::String(format!("Hello, {}", name))),
-//MyMethod::List { i } => Ok(MyHandlerResult::String(format!("List, {}", i))),
-//MyMethod::Complicated {} => Err(RpcError {
-//kind: RpcErrorKind::Custom(-32000),
-//message: Some("Complicated method not implemented".into()),
-//}),
-//}
-//}
-//}
-
-//fn main() {
-//env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
-//let myrpc = MyRpc {};
-//let call = MyMethod::Hello {
-//name: "world".to_owned(),
-//};
-//let call = MyMethod::Complicated {};
-//let qs: tools::http::QueryString = Request::new(1.into(), call).try_into().unwrap();
-//println!("{}", qs);
-//let req: Request<MyMethod> = qs.try_into().unwrap();
-//dbg!(&req);
-//let response = myrpc.handle_request(req, "local").unwrap();
-//let h: tools::http::HttpResponse = response.try_into().unwrap();
-//dbg!(h);
-//let (status, headers, body) = h.into_parts();
-//println!("{:?} {:?}", status, headers);
-//println!("{}", std::str::from_utf8(&body).unwrap());
-//let client: RpcClient<dataformat::Json, MyMethod, MyHandlerResult> = RpcClient::new();
-//let req = client.request(MyMethod::Test {}).unwrap();
-//if let Some(v) = myrpc.handle_request_payload::<dataformat::Json, _>(req.payload(), "local") {
-//dbg!(req.handle_response(v.as_slice())).ok();
-//}
-//let req = client.request(MyMethod::Hello { name: "world" }).unwrap();
-//if let Some(v) = myrpc.handle_request_payload::<dataformat::Json, _>(req.payload(), "local") {
-//dbg!(req.handle_response(v.as_slice())).ok();
-//}
-//let req = client.request(MyMethod::Complicated {}).unwrap();
-//if let Some(v) = myrpc.handle_request_payload::<dataformat::Json, _>(req.payload(), "local") {
-//dbg!(req.handle_response(v.as_slice())).ok();
-//}
-//let invalid_params_req = r#"{"jsonrpc":"2.0","id":3,"method":"test","params":{"abc": 123}}"#;
-//let resp =
-//myrpc.handle_request_payload::<dataformat::Json, _>(invalid_params_req.as_bytes(), "local");
-//if let Some(v) = resp {
-//dbg!(std::str::from_utf8(v.as_slice())).ok();
-//}
-//}

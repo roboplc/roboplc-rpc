@@ -13,10 +13,7 @@ pub enum Error {
     InvalidData(String),
 }
 
-use crate::{
-    request::Request,
-    response::{Response, RpcResponse},
-};
+use crate::{request::Request, response::Response};
 
 #[derive(Debug)]
 pub struct QueryString(String);
@@ -191,10 +188,10 @@ impl<R: Serialize> TryFrom<Response<R>> for HttpResponse {
 
     fn try_from(response: Response<R>) -> Result<Self, Self::Error> {
         let (id, res) = response.into_parts();
-        let status = if matches!(res, RpcResponse::Error { .. }) {
-            StatusCode::INTERNAL_SERVER_ERROR
-        } else {
+        let status = if res.is_ok() {
             StatusCode::OK
+        } else {
+            StatusCode::INTERNAL_SERVER_ERROR
         };
         let mut headers = header::HeaderMap::new();
         headers.insert(

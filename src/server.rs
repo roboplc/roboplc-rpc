@@ -23,11 +23,11 @@ pub trait RpcServer<'a> {
         request: Request<Self::Method>,
         source: Self::Source,
     ) -> Option<Response<Self::Result>> {
-        let result = match self.rpc_handler(request.method, source, request.id.is_some()) {
-            Ok(v) => RpcResponse::Result(v),
-            Err(e) => RpcResponse::Error(RpcError {
+        let result = match self.rpc_handler(request.method, source) {
+            Ok(v) => RpcResponse::Ok(v),
+            Err(e) => RpcResponse::Err(RpcError {
                 kind: e.kind,
-                message: e.message.map(|m| m.to_string()),
+                message: e.message,
             }),
         };
         request
@@ -77,10 +77,6 @@ pub trait RpcServer<'a> {
         }
     }
 
-    fn rpc_handler(
-        &'a self,
-        method: Self::Method,
-        source: Self::Source,
-        response_required: bool,
-    ) -> RpcResult<Self::Result>;
+    fn rpc_handler(&'a self, method: Self::Method, source: Self::Source)
+        -> RpcResult<Self::Result>;
 }
