@@ -29,7 +29,7 @@ use serde::{Serialize, Deserialize};
 use roboplc_rpc::{client::RpcClient, dataformat};
 
 #[derive(Serialize, Deserialize)]
-// use method/params for the canonical JSON-RPC 2.0
+// use tag = "method", content = "params" for the canonical JSON-RPC 2.0
 #[serde(tag = "m", content = "p", rename_all = "lowercase", deny_unknown_fields)]
 enum MyMethod<'a> {
     Test {},
@@ -106,7 +106,11 @@ By default the crate works in a "minimalistic" mode:
 * `jsonrpc` field is not required in the request/response, the version is never
   checked.
 
-* `id`, `result` and `error` fields are renamed to `i`, `r` and `e` respectively.
+* `id`, `method` and `params` request fields are renamed to `i`, `m` and `p`
+  respectively.
+
+* `id`, `result` and `error` response fields are renamed to `i`, `r` and `e`
+  respectively.
 
 The mode can be changed to JSON-RPC 2.0 canonical by enabling the `canonical`
 feature.
