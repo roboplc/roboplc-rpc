@@ -20,8 +20,23 @@ use crate::{request::Request, response::Response};
 
 /// Query string representation of a JSON-RPC request,
 /// as: `i=1&m=method&param1=value1&param2=value2`, where id is optional
+///
+/// Booleans ("true"/"false"), numbers and "null" are parsed automatically,
 #[derive(Debug)]
 pub struct QueryString(String);
+
+impl QueryString {
+    /// Create a new query string from a string
+    pub fn new(s: &str) -> Self {
+        QueryString(s.to_owned())
+    }
+}
+
+impl From<String> for QueryString {
+    fn from(s: String) -> Self {
+        QueryString(s)
+    }
+}
 
 impl fmt::Display for QueryString {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -49,11 +64,11 @@ impl<M: Serialize> TryFrom<Request<M>> for QueryString {
     }
 }
 
-impl<M: DeserializeOwned + Serialize> TryInto<Request<M>> for QueryString {
+impl<M: DeserializeOwned + Serialize> TryFrom<QueryString> for Request<M> {
     type Error = Error;
 
-    fn try_into(self) -> Result<Request<M>, Self::Error> {
-        request_from_query_string(&self.0)
+    fn try_from(qs: QueryString) -> Result<Self, Self::Error> {
+        request_from_query_string(&qs.0)
     }
 }
 
@@ -98,9 +113,15 @@ fn request_from_query_string<M: DeserializeOwned + Serialize>(
         }
     }
     let method_name = method.ok_or(Error::InvalidData("the method is missing".into()))?;
+    #[cfg(feature = "canonical")]
     let method = serde_json::from_value(json!({
         "method": method_name,
         "params": params,
+    }))?;
+    #[cfg(not(feature = "canonical"))]
+    let method = serde_json::from_value(json!({
+        "m": method_name,
+        "p": params,
     }))?;
     if let Some(id) = id {
         Ok(Request::new(id, method))
