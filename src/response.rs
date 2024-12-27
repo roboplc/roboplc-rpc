@@ -19,7 +19,8 @@ pub struct Response<R> {
     #[cfg_attr(feature = "canonical", serde(alias = "i"))]
     #[cfg_attr(not(feature = "canonical"), serde(rename = "i"))]
     id: Id,
-    #[serde(flatten)]
+    #[cfg_attr(feature = "std", serde(flatten))]
+    #[cfg_attr(not(feature = "std"), serde(rename = "p"))]
     handler_response: HandlerResponse<R>,
 }
 

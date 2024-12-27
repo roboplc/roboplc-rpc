@@ -126,6 +126,9 @@ feature.
 
 This library is `no_std` compatible. Use `--no-default-features` to disable `std` support.
 
+`no-std` mode is still in development, e.g. a std-client can not talk to a
+no-std-server and vice versa.
+
 [heapless::String](https://docs.rs/heapless/latest/heapless/struct.String.html)
 is used for strings instead of the standard one (for error messages).
 
@@ -134,7 +137,8 @@ Limitations:
 * Request id can be `u32` only.
 * Provides data types only, no client/server implementations.
 * Error messages can be 128 bytes long only.
-
+* Request and response data is placed under additional `p` field as
+  [serde](https://serde.rs) does not support `flatten` in `no_std`.
 
 ## MSRV
 

@@ -29,7 +29,8 @@ pub struct Request<M> {
         serde(rename = "i", skip_serializing_if = "Option::is_none")
     )]
     pub(crate) id: Option<Id>,
-    #[serde(flatten)]
+    #[cfg_attr(feature = "std", serde(flatten))]
+    #[cfg_attr(not(feature = "std"), serde(rename = "p"))]
     pub(crate) method: M,
 }
 
