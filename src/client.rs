@@ -11,12 +11,7 @@ use crate::{dataformat, request::Request, response::Response, RpcError, RpcError
 #[allow(clippy::module_name_repetitions)]
 #[derive(Default)]
 /// RPC client module, used to create RPC requests and handle RPC responses, call ids are `u32`
-pub struct RpcClient<'a, D, M, R>
-where
-    D: dataformat::DataFormat,
-    M: Serialize + Deserialize<'a>,
-    R: Serialize + Deserialize<'a>,
-{
+pub struct RpcClient<'a, D, M, R> {
     _phantom_d: PhantomData<D>,
     _phantom_a: PhantomData<&'a ()>,
     _phantom_m: PhantomData<M>,
