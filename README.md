@@ -129,7 +129,7 @@ Limitations:
 
 * Request id can be `u32` only.
 * Provides data types only, no client/server implementations.
-* Error messages can be 128 bytes long only
+* Error messages can be 128 bytes long only.
 
 
 ## MSRV
