@@ -1,9 +1,4 @@
-use roboplc_rpc::{
-    client::RpcClient,
-    dataformat,
-    server::{self, RpcServer as _},
-    RpcError, RpcErrorKind, RpcResult,
-};
+use roboplc_rpc::{client::RpcClient, dataformat, server, RpcError, RpcErrorKind, RpcResult};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -35,12 +30,12 @@ enum MyResult {
 
 struct MyRpc {}
 
-impl<'a> server::RpcServer<'a> for MyRpc {
+impl<'a> server::RpcServerHandler<'a> for MyRpc {
     type Method = MyMethod<'a>;
     type Result = MyResult;
     type Source = &'static str;
 
-    fn rpc_handler(&self, method: MyMethod, _source: Self::Source) -> RpcResult<MyResult> {
+    fn handle_call(&self, method: MyMethod, _source: Self::Source) -> RpcResult<MyResult> {
         match method {
             MyMethod::Test {} => Ok(MyResult::General { ok: true }),
             MyMethod::Hello { name } => Ok(MyResult::String(format!("Hello, {}", name))),
@@ -55,14 +50,15 @@ impl<'a> server::RpcServer<'a> for MyRpc {
 
 fn main() {
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
-    let myrpc = MyRpc {};
+    let rpc = MyRpc {};
+    let server = server::RpcServer::new(rpc);
     let client: RpcClient<dataformat::Json, MyMethod, MyResult> = RpcClient::new();
     let req = client.request(MyMethod::Test {}).unwrap();
     println!(
         "request payload: {}",
         std::str::from_utf8(req.payload()).unwrap()
     );
-    if let Some(v) = myrpc.handle_request_payload::<dataformat::Json>(req.payload(), "local") {
+    if let Some(v) = server.handle_request_payload::<dataformat::Json>(req.payload(), "local") {
         println!("response: {}", std::str::from_utf8(v.as_slice()).unwrap());
         dbg!(req.handle_response(v.as_slice())).ok();
     }
@@ -71,7 +67,7 @@ fn main() {
         std::str::from_utf8(req.payload()).unwrap()
     );
     let req = client.request(MyMethod::Hello { name: "world" }).unwrap();
-    if let Some(v) = myrpc.handle_request_payload::<dataformat::Json>(req.payload(), "local") {
+    if let Some(v) = server.handle_request_payload::<dataformat::Json>(req.payload(), "local") {
         println!("response: {}", std::str::from_utf8(v.as_slice()).unwrap());
         dbg!(req.handle_response(v.as_slice())).ok();
     }
@@ -80,14 +76,14 @@ fn main() {
         std::str::from_utf8(req.payload()).unwrap()
     );
     let req = client.request(MyMethod::Complicated {}).unwrap();
-    if let Some(v) = myrpc.handle_request_payload::<dataformat::Json>(req.payload(), "local") {
+    if let Some(v) = server.handle_request_payload::<dataformat::Json>(req.payload(), "local") {
         println!("response: {}", std::str::from_utf8(v.as_slice()).unwrap());
         dbg!(req.handle_response(v.as_slice())).ok();
     }
     let invalid_params_req = r#"{"jsonrpc":"2.0","id":3,"method":"test","params":{"abc": 123}}"#;
     println!("request payload: {}", invalid_params_req);
     let resp =
-        myrpc.handle_request_payload::<dataformat::Json>(invalid_params_req.as_bytes(), "local");
+        server.handle_request_payload::<dataformat::Json>(invalid_params_req.as_bytes(), "local");
     if let Some(v) = resp {
         println!("response: {}", std::str::from_utf8(v.as_slice()).unwrap());
         dbg!(std::str::from_utf8(v.as_slice())).ok();

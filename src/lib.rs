@@ -1,4 +1,6 @@
+#![ doc = include_str!( concat!( env!( "CARGO_MANIFEST_DIR" ), "/", "README.md" ) ) ]
 #![cfg_attr(not(feature = "std"), no_std)]
+#![deny(missing_docs)]
 
 use serde::{Deserialize, Serialize};
 
@@ -9,12 +11,15 @@ const VERSION_HEADER: Option<()> = Some(());
 #[cfg(not(feature = "canonical"))]
 const VERSION_HEADER: Option<()> = None;
 
+#[cfg(feature = "canonical")]
 const ERR_INVALID_PROTOCOL_VERSION: &str = "Invalid protocol version";
 
 #[cfg(feature = "std")]
-type Id = serde_json::Value;
+/// RPC call id (`u32` in `no_std` mode, `serde_json::Value` in `std` mode)
+pub type Id = serde_json::Value;
 #[cfg(not(feature = "std"))]
-type Id = u32;
+/// RPC call id (`u32` in `no_std` mode, `serde_json::Value` in `std` mode)
+pub type Id = u32;
 
 #[cfg(feature = "std")]
 type String = std::string::String;
@@ -22,13 +27,19 @@ type String = std::string::String;
 type String = heapless::String<128>;
 
 #[cfg(feature = "std")]
+/// RPC client
 pub mod client;
 #[cfg(feature = "std")]
+/// Data serialization formats
 pub mod dataformat;
+/// RPC request
 pub mod request;
+/// RPC response
 pub mod response;
 #[cfg(feature = "std")]
+/// RPC server
 pub mod server;
+/// Miscellaneous tools
 pub mod tools;
 
 fn de_validate_version<'de, D>(deserializer: D) -> Result<Option<()>, D::Error>
@@ -57,13 +68,20 @@ const RPC_ERROR_METHOD_NOT_FOUND: i16 = -32601;
 const RPC_ERROR_INVALID_PARAMS: i16 = -32602;
 const RPC_ERROR_INTERNAL_ERROR: i16 = -32603;
 
+/// RPC error kind
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum RpcErrorKind {
+    /// Parse error
     ParseError,
+    /// Invalid request
     InvalidRequest,
+    /// Method not found
     MethodNotFound,
+    /// Invalid parameters (reserved for the future/manual use)
     InvalidParams,
+    /// Internal error
     InternalError,
+    /// Custom error
     Custom(i16),
 }
 
@@ -118,6 +136,7 @@ impl<'de> Deserialize<'de> for RpcErrorKind {
     }
 }
 
+/// RPC error type
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RpcError {
     #[serde(rename = "code")]
@@ -127,21 +146,26 @@ pub struct RpcError {
 }
 
 impl RpcError {
+    /// Create a new error
     pub fn new0(kind: RpcErrorKind) -> Self {
         Self {
             kind,
             message: None,
         }
     }
+    /// Create a new error with a message. The message must be `String` to have compatibility with
+    /// `no_std` mode.
     pub fn new(kind: RpcErrorKind, message: String) -> Self {
         Self {
             kind,
             message: Some(message),
         }
     }
+    /// Get the error kind
     pub fn kind(&self) -> RpcErrorKind {
         self.kind
     }
+    /// Get the error message
     pub fn message(&self) -> Option<&str> {
         self.message.as_deref()
     }
@@ -161,4 +185,5 @@ impl core::fmt::Display for RpcError {
 #[cfg(feature = "std")]
 impl std::error::Error for RpcError {}
 
+/// RPC result type alias for RPC handler
 pub type RpcResult<R> = Result<R, RpcError>;

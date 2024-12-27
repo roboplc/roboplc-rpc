@@ -1,20 +1,25 @@
 use core::fmt;
-use std::{collections::BTreeMap, mem};
+use std::collections::BTreeMap;
 
 use http::{header, StatusCode};
 use serde::{de::DeserializeOwned, Serialize};
 use serde_json::{json, Value};
 
+/// HTTP tools error type
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
+    /// Serialization error
     #[error("pack error: {0}")]
     Serialization(#[from] serde_json::Error),
+    /// Invalid data
     #[error("invalid data: {0}")]
     InvalidData(String),
 }
 
 use crate::{request::Request, response::Response};
 
+/// Query string representation of a JSON-RPC request,
+/// as: `i=1&m=method&param1=value1&param2=value2`, where id is optional
 #[derive(Debug)]
 pub struct QueryString(String);
 
@@ -153,6 +158,7 @@ fn request_into_query_string<M: Serialize>(req: &Request<M>) -> Result<String, E
 
 #[derive(Debug)]
 #[allow(clippy::module_name_repetitions)]
+/// A minimalistic HTTP response (no JSON RPC version, call id is placed to `X-JSONRPC-ID` header)
 pub struct HttpResponse {
     status: http::StatusCode,
     headers: http::header::HeaderMap,
@@ -160,24 +166,23 @@ pub struct HttpResponse {
 }
 
 impl HttpResponse {
+    /// HTTP status code (200 for success, 500 for error)
     pub fn status(&self) -> http::StatusCode {
         self.status
     }
+    /// HTTP headers
     pub fn headers(&self) -> &http::header::HeaderMap {
         &self.headers
     }
+    /// HTTP body
     pub fn body(&self) -> &str {
         &self.body
     }
+    /// Mutable reference to HTTP headers
     pub fn headers_mut(&mut self) -> &mut http::header::HeaderMap {
         &mut self.headers
     }
-    pub fn take_headers(&mut self) -> http::header::HeaderMap {
-        mem::take(&mut self.headers)
-    }
-    pub fn take_body(&mut self) -> String {
-        mem::take(&mut self.body)
-    }
+    /// Split the response into parts
     pub fn into_parts(self) -> (http::StatusCode, http::header::HeaderMap, String) {
         (self.status, self.headers, self.body)
     }

@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use super::DataFormat;
 
+/// JSON data format packer.
 pub struct Packer;
 
 impl DataFormat for Packer {

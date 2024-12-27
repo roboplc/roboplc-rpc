@@ -7,6 +7,7 @@ use crate::{
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(deny_unknown_fields)]
+/// JSON-RPC Response object
 pub struct Response<R> {
     #[serde(
         default,
@@ -19,38 +20,52 @@ pub struct Response<R> {
     #[cfg_attr(not(feature = "canonical"), serde(rename = "i"))]
     id: Id,
     #[serde(flatten)]
-    rpc_response: RpcResponse<R>,
+    handler_response: HandlerResponse<R>,
 }
 
 impl<R> Response<R> {
-    pub fn into_parts(self) -> (Id, RpcResponse<R>) {
-        (self.id, self.rpc_response)
+    /// Split the Response object into its parts (useful for 3rd party serialization)
+    pub fn into_parts(self) -> (Id, HandlerResponse<R>) {
+        (self.id, self.handler_response)
     }
-    pub fn from_rpc_response(id: Id, rpc_response: RpcResponse<R>) -> Response<R> {
+    /// Combine the parts into a Response object (useful for 3rd party de-serialization)
+    pub fn from_parts(id: Id, handler_response: HandlerResponse<R>) -> Response<R> {
         Response {
             jsonrpc: VERSION_HEADER,
             id,
-            rpc_response,
+            handler_response,
         }
     }
+    /// Create a new Response object with the given ID and result from the RPC handler response
+    pub fn from_handler_response(id: Id, handler_response: HandlerResponse<R>) -> Response<R> {
+        Response {
+            jsonrpc: VERSION_HEADER,
+            id,
+            handler_response,
+        }
+    }
+    /// Convert the response into an error response with the given error
     pub fn into_error_response(self, rpc_error: RpcError) -> Response<R> {
         Response {
             jsonrpc: VERSION_HEADER,
             id: self.id,
-            rpc_response: RpcResponse::Err(rpc_error),
+            handler_response: HandlerResponse::Err(rpc_error),
         }
     }
+    /// Get the ID of the response
     pub fn id(&self) -> &Id {
         &self.id
     }
+    /// Get the handler response
     pub fn into_server_error_response(self, error: String) -> Response<R> {
         Self::from_server_error(self.id, error)
     }
+    /// Create a new Response object with the given ID and error message
     pub fn from_server_error(id: Id, error: String) -> Response<R> {
         Response {
             jsonrpc: VERSION_HEADER,
             id,
-            rpc_response: RpcResponse::Err(RpcError {
+            handler_response: HandlerResponse::Err(RpcError {
                 kind: RpcErrorKind::InternalError,
                 message: Some(error),
             }),
@@ -61,53 +76,61 @@ impl<R> Response<R> {
 #[allow(clippy::module_name_repetitions)]
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(deny_unknown_fields)]
-pub enum RpcResponse<R> {
+/// RPC handler response object. Basically duplicates the standard Result object, required for the
+/// proper serialization
+pub enum HandlerResponse<R> {
     #[cfg_attr(feature = "canonical", serde(rename = "result", alias = "r"))]
     #[cfg_attr(not(feature = "canonical"), serde(rename = "r"))]
+    /// The RPC handler returned a data
     Ok(R),
     #[cfg_attr(feature = "canonical", serde(rename = "error", alias = "e"))]
     #[cfg_attr(not(feature = "canonical"), serde(rename = "e"))]
+    /// The RPC handler returned an error
     Err(RpcError),
 }
 
-impl<R> RpcResponse<R> {
+impl<R> HandlerResponse<R> {
+    /// Is the response Ok
     pub fn is_ok(&self) -> bool {
-        matches!(self, RpcResponse::Ok(_))
+        matches!(self, HandlerResponse::Ok(_))
     }
+    /// Is the response an error
     pub fn is_err(&self) -> bool {
-        matches!(self, RpcResponse::Err(_))
+        matches!(self, HandlerResponse::Err(_))
     }
+    /// Convert the response data into an option
     pub fn ok(&self) -> Option<&R> {
         match self {
-            RpcResponse::Ok(r) => Some(r),
-            RpcResponse::Err(_) => None,
+            HandlerResponse::Ok(r) => Some(r),
+            HandlerResponse::Err(_) => None,
         }
     }
+    /// Convert the response error into an option
     pub fn err(&self) -> Option<&RpcError> {
         match self {
-            RpcResponse::Ok(_) => None,
-            RpcResponse::Err(e) => Some(e),
+            HandlerResponse::Ok(_) => None,
+            HandlerResponse::Err(e) => Some(e),
         }
     }
 }
 
-impl<R> From<RpcResponse<R>> for RpcResult<R> {
-    fn from(res: RpcResponse<R>) -> Self {
+impl<R> From<HandlerResponse<R>> for RpcResult<R> {
+    fn from(res: HandlerResponse<R>) -> Self {
         match res {
-            RpcResponse::Err(e) => Err(RpcError {
+            HandlerResponse::Err(e) => Err(RpcError {
                 kind: e.kind,
                 message: e.message,
             }),
-            RpcResponse::Ok(r) => Ok(r),
+            HandlerResponse::Ok(r) => Ok(r),
         }
     }
 }
 
-impl<R> From<RpcResult<R>> for RpcResponse<R> {
+impl<R> From<RpcResult<R>> for HandlerResponse<R> {
     fn from(res: RpcResult<R>) -> Self {
         match res {
-            Ok(r) => RpcResponse::Ok(r),
-            Err(e) => RpcResponse::Err(e),
+            Ok(r) => HandlerResponse::Ok(r),
+            Err(e) => HandlerResponse::Err(e),
         }
     }
 }
