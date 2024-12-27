@@ -100,7 +100,7 @@ pub trait RpcServerHandler<'a> {
     /// Result of the methods
     type Result: Serialize + Deserialize<'a>;
     /// Source of the call (IP address, etc.)
-    type Source: fmt::Display;
+    type Source;
 
     /// A method to handle calls
     fn handle_call(&'a self, method: Self::Method, source: Self::Source)
