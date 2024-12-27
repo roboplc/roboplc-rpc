@@ -1,4 +1,4 @@
-use core::fmt;
+use core::{fmt, marker::PhantomData};
 use tracing::error;
 
 use serde::{Deserialize, Serialize};
@@ -15,10 +15,10 @@ const ERR_FAILED_TO_PARSE: &str = "Failed to parse RPC request";
 /// JSON RPC server
 #[allow(clippy::module_name_repetitions)]
 pub struct RpcServer<'a, RPC: RpcServerHandler<'a>, M, SRC, R> {
-    _phantom_a: std::marker::PhantomData<&'a ()>,
-    _phantom_m: std::marker::PhantomData<M>,
-    _phantom_src: std::marker::PhantomData<SRC>,
-    _phantom_r: std::marker::PhantomData<R>,
+    _phantom_a: PhantomData<&'a ()>,
+    _phantom_m: PhantomData<M>,
+    _phantom_src: PhantomData<SRC>,
+    _phantom_r: PhantomData<R>,
     rpc: RPC,
 }
 
@@ -32,10 +32,10 @@ where
     /// Create a new JSON RPC server
     pub fn new(rpc: RPC) -> Self {
         Self {
-            _phantom_a: std::marker::PhantomData,
-            _phantom_m: std::marker::PhantomData,
-            _phantom_src: std::marker::PhantomData,
-            _phantom_r: std::marker::PhantomData,
+            _phantom_a: PhantomData,
+            _phantom_m: PhantomData,
+            _phantom_src: PhantomData,
+            _phantom_r: PhantomData,
             rpc,
         }
     }

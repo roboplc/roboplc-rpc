@@ -1,4 +1,5 @@
 use core::{
+    marker::PhantomData,
     mem,
     sync::atomic::{AtomicU32, Ordering},
 };
@@ -16,10 +17,10 @@ where
     M: Serialize + Deserialize<'a>,
     R: Serialize + Deserialize<'a>,
 {
-    _phantom_d: core::marker::PhantomData<D>,
-    _phantom_a: core::marker::PhantomData<&'a ()>,
-    _phantom_m: core::marker::PhantomData<M>,
-    _phantom_r: core::marker::PhantomData<R>,
+    _phantom_d: PhantomData<D>,
+    _phantom_a: PhantomData<&'a ()>,
+    _phantom_m: PhantomData<M>,
+    _phantom_r: PhantomData<R>,
     request_id: AtomicU32,
 }
 
@@ -32,10 +33,10 @@ where
     /// Create a new RPC client
     pub fn new() -> Self {
         Self {
-            _phantom_d: core::marker::PhantomData,
-            _phantom_a: core::marker::PhantomData,
-            _phantom_m: core::marker::PhantomData,
-            _phantom_r: core::marker::PhantomData,
+            _phantom_d: PhantomData,
+            _phantom_a: PhantomData,
+            _phantom_m: PhantomData,
+            _phantom_r: PhantomData,
             request_id: AtomicU32::new(0),
         }
     }
